@@ -9,7 +9,7 @@
 
 ## 🌐 Live Deployments
 - **GitHub Repository:** [https://github.com/Flixxy-TheHealer/sagardrishti](https://github.com/Flixxy-TheHealer/sagardrishti)
-- **Live Vercel Application:** [https://sagardrishti.vercel.app](https://sagardrishti.vercel.app)
+- **Live Vercel Application:** [https://sagardrishti-umber.vercel.app](https://sagardrishti-umber.vercel.app) (Production: [https://sagardrishti-7xuf51im2-gay-student.vercel.app](https://sagardrishti-7xuf51im2-gay-student.vercel.app))
 
 ---
 
