@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>सागरदृष्टि (SAGAR-3D) | Interactive 3D Ocean Intelligence & Visualization Platform</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Three.js + OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Chart.js for Float/Glider In-situ Profiles -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header / App Bar -->
+  <header class="app-header">
+    <div class="brand-container">
+      <div class="logo-mark">
+        <i data-lucide="waves" class="logo-icon"></i>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title-row">
+          <h1>सागरदृष्टि <span>SAGAR-3D</span></h1>
+          <span class="badge-ps">PS #26047 / 26067</span>
+          <span class="badge-status"><span class="pulse-dot"></span> LIVE INCOIS STREAM</span>
+        </div>
+        <p class="brand-sub">Interactive 3D Ocean Intelligence & Volumetric Visualization Platform • MoES / INCOIS</p>
+      </div>
+    </div>
+
+    <!-- Quick Region Presets -->
+    <div class="header-presets">
+      <button class="preset-btn active" data-preset="all">Indian Ocean</button>
+      <button class="preset-btn" data-preset="arabian">Arabian Sea</button>
+      <button class="preset-btn" data-preset="bob">Bay of Bengal</button>
+      <button class="preset-btn" data-preset="eez">India EEZ</button>
+      <button class="preset-btn" data-preset="equatorial">Equatorial IO</button>
+    </div>
+
+    <div class="header-actions">
+      <div class="time-display">
+        <span class="utc-clock" id="utcClock">UTC 00:00:00</span>
+        <span class="ist-clock" id="istClock">IST 05:30:00</span>
+      </div>
+      <button id="btnScienceTour" class="action-btn-accent" title="Public Outreach & Science Mode">
+        <i data-lucide="compass"></i> Science Tour
+      </button>
+      <button id="btnToggleFullscreen" class="action-btn" title="Toggle Fullscreen">
+        <i data-lucide="maximize-2"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="main-layout">
+    <!-- Left Floating Control Panel -->
+    <aside class="control-panel glass-panel" id="controlPanel">
+      <div class="panel-section">
+        <div class="section-title">
+          <i data-lucide="layers"></i>
+          <span>Ocean Model Variable</span>
+        </div>
+        <div class="variable-grid">
+          <button class="var-btn active" data-var="sst">
+            <span class="var-name">SST</span>
+            <span class="var-desc">Temperature (°C)</span>
+          </button>
+          <button class="var-btn" data-var="sss">
+            <span class="var-name">Salinity</span>
+            <span class="var-desc">PSU</span>
+          </button>
+          <button class="var-btn" data-var="currents">
+            <span class="var-name">Currents</span>
+            <span class="var-desc">Velocity (m/s)</span>
+          </button>
+          <button class="var-btn" data-var="chla">
+            <span class="var-name">Chlorophyll-a</span>
+            <span class="var-desc">mg/m³</span>
+          </button>
+          <button class="var-btn" data-var="doxy">
+            <span class="var-name">Dissolved O₂</span>
+            <span class="var-desc">ml/L</span>
+          </button>
+          <button class="var-btn" data-var="thermocline">
+            <span class="var-name">Thermocline</span>
+            <span class="var-desc">D20 Depth (m)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Depth Column & Slicing Navigation -->
+      <div class="panel-section">
+        <div class="section-header-row">
+          <div class="section-title">
+            <i data-lucide="arrow-down-narrow-wide"></i>
+            <span>Depth-Resolved Column</span>
+          </div>
+          <span class="depth-badge" id="depthValueBadge">0 m (Surface)</span>
+        </div>
+
+        <div class="depth-slider-container">
+          <input type="range" id="depthSlider" min="0" max="2000" step="10" value="0" class="slider-cyber">
+          <div class="depth-markers">
+            <span>0m (Epipelagic)</span>
+            <span>200m (Mesopelagic)</span>
+            <span>1000m</span>
+            <span>2000m (Abyss)</span>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <label for="exaggerationSlider">Vertical Exaggeration: <span id="exaggerationValue">4.0x</span></label>
+          <input type="range" id="exaggerationSlider" min="1" max="12" step="0.5" value="4.0" class="slider-cyber">
+        </div>
+
+        <div class="control-row-toggle">
+          <label>3D Isosurface Extraction</label>
+          <input type="checkbox" id="toggleIsosurface" checked>
+        </div>
+      </div>
+
+      <!-- In-Situ Instrument Overlay -->
+      <div class="panel-section">
+        <div class="section-title">
+          <i data-lucide="radio"></i>
+          <span>In-Situ Observations Overlay</span>
+        </div>
+        <div class="checkbox-list">
+          <label class="check-item">
+            <input type="checkbox" id="toggleArgo" checked>
+            <span class="indicator-dot argo-dot"></span>
+            <span>Argo Profiling Floats (<span id="argoCount">42 Active</span>)</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" id="toggleGliders" checked>
+            <span class="indicator-dot glider-dot"></span>
+            <span>Autonomous Gliders (<span id="gliderCount">8 Missions</span>)</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" id="toggleMoorings" checked>
+            <span class="indicator-dot mooring-dot"></span>
+            <span>CTD Moorings & OMNI Buoys</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" id="toggleStreamlines" checked>
+            <span class="indicator-dot vector-dot"></span>
+            <span>3D Vector Current Streamlines</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Disaster & Hazard Advisories -->
+      <div class="panel-section">
+        <div class="section-title">
+          <i data-lucide="shield-alert"></i>
+          <span>Operational Advisories (INCOIS)</span>
+        </div>
+        <div class="advisory-chips">
+          <button class="chip-btn active" id="chipPFZ" title="Potential Fishing Zones based on SST & Chlorophyll fronts">
+            <i data-lucide="fish"></i> PFZ Advisory
+          </button>
+          <button class="chip-btn" id="chipHighWave" title="High Wave / Swell Surge Alert">
+            <i data-lucide="alert-triangle"></i> High Wave Alert
+          </button>
+          <button class="chip-btn" id="chipCyclone" title="Cyclone Track & Storm Surge Drift">
+            <i data-lucide="tornado"></i> Cyclone Risk (Bay of Bengal)
+          </button>
+          <button class="chip-btn" id="chipSAR" title="Search-and-Rescue Drift Prediction">
+            <i data-lucide="life-buoy"></i> SAR Drift Cone
+          </button>
+        </div>
+      </div>
+
+      <!-- Data Ingestion Architecture Status -->
+      <div class="panel-section ingestion-section">
+        <div class="section-title">
+          <i data-lucide="server"></i>
+          <span>Multi-Format Ingestion Backend</span>
+        </div>
+        <div class="pipeline-status">
+          <div class="pipeline-item">
+            <span class="pipe-label">NetCDF (CF-1.8):</span>
+            <span class="pipe-val ok">Auto-Parsed (xarray/PyNIO)</span>
+          </div>
+          <div class="pipeline-item">
+            <span class="pipe-label">OPeNDAP / WCS:</span>
+            <span class="pipe-val ok">INCOIS LAS Gateway Connected</span>
+          </div>
+          <div class="pipeline-item">
+            <span class="pipe-label">Argo GDAC:</span>
+            <span class="pipe-val ok">FTP Synced (Ifremer/INCOIS)</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 3D Canvas Viewport -->
+    <main class="canvas-viewport" id="viewportContainer">
+      <div id="threeCanvas"></div>
+
+      <!-- HUD Compass & Coordinate overlay -->
+      <div class="hud-overlay">
+        <div class="hud-box">
+          <div class="hud-item"><span class="hud-lbl">CENTER:</span> <span id="hudCoords">12.50° N, 77.20° E</span></div>
+          <div class="hud-item"><span class="hud-lbl">ZOOM:</span> <span id="hudZoom">2.4x</span></div>
+          <div class="hud-item"><span class="hud-lbl">TIME-STEP:</span> <span id="hudTime">2026-09-30 18:00 UTC</span></div>
+        </div>
+      </div>
+
+      <!-- Interactive 3D Cursor Probe Card -->
+      <div class="probe-hud glass-panel" id="probeHud">
+        <div class="probe-title"><i data-lucide="crosshair"></i> Dynamic Probe Point</div>
+        <div class="probe-grid">
+          <div><span class="dim">Region:</span> <b id="probeRegion">Arabian Sea (Central)</b></div>
+          <div><span class="dim">Lat/Lon:</span> <b id="probeCoord">15.2°N, 68.4°E</b></div>
+          <div><span class="dim">SST:</span> <b id="probeSST" class="highlight-cyan">28.4 °C</b></div>
+          <div><span class="dim">Salinity:</span> <b id="probeSal">36.2 PSU</b></div>
+          <div><span class="dim">Current:</span> <b id="probeVel">0.42 m/s (124°)</b></div>
+          <div><span class="dim">Thermocline:</span> <b id="probeThermo">82 m</b></div>
+        </div>
+      </div>
+
+      <!-- Dynamic Colorbar Legend -->
+      <div class="colorbar-card glass-panel" id="colorbarCard">
+        <div class="colorbar-header">
+          <span id="colorbarTitle">Sea Surface Temp (°C)</span>
+          <select id="colorPaletteSelect" class="palette-picker">
+            <option value="turbo">Turbo</option>
+            <option value="viridis">Viridis</option>
+            <option value="thermal" selected>Thermal</option>
+            <option value="haline">Haline</option>
+            <option value="magma">Magma</option>
+          </select>
+        </div>
+        <div class="colorbar-bar" id="colorbarGradient"></div>
+        <div class="colorbar-labels">
+          <span id="colorMin">18.0 °C</span>
+          <span id="colorMid">26.0 °C</span>
+          <span id="colorMax">32.5 °C</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Inspection Modal / Float & Glider Profile Drawer -->
+    <aside class="profile-drawer glass-panel" id="profileDrawer">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <i data-lucide="activity" class="drawer-icon"></i>
+          <div>
+            <h3 id="drawerInstrumentName">Argo Float #2902143</h3>
+            <p id="drawerSubtitle">Deployed by INCOIS • Arabian Sea Warm Pool</p>
+          </div>
+        </div>
+        <button class="close-drawer-btn" id="closeDrawerBtn"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="drawer-stats">
+        <div class="stat-card">
+          <span class="stat-lbl">LATITUDE</span>
+          <span class="stat-val" id="statLat">14.850° N</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-lbl">LONGITUDE</span>
+          <span class="stat-val" id="statLon">69.210° E</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-lbl">CYCLE / STN</span>
+          <span class="stat-val" id="statCycle">#184</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-lbl">MAX DEPTH</span>
+          <span class="stat-val" id="statMaxDepth">2,000 m</span>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-tab-bar">
+          <button class="chart-tab active" data-chart-var="temp">Temp vs Depth</button>
+          <button class="chart-tab" data-chart-var="salinity">Salinity vs Depth</button>
+          <button class="chart-tab" data-chart-var="density">Density (σ-θ)</button>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="profileChart"></canvas>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <div class="footer-meta">
+          <span>Format: NetCDF CF-1.6 / WMO 2902143</span>
+          <span>QC Flag: <b class="qc-good">PASSED (Class 1)</b></span>
+        </div>
+        <button class="download-data-btn" id="btnDownloadProfile">
+          <i data-lucide="download"></i> Export Profile CSV/NetCDF
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Bottom Timeline & Playback Controller -->
+  <footer class="playback-bar glass-panel">
+    <div class="playback-controls">
+      <button class="ctrl-btn" id="btnPlayPause" title="Play/Pause Forecast Animation">
+        <i data-lucide="play" id="playIcon"></i>
+      </button>
+      <button class="ctrl-btn" id="btnStepBack" title="Step Back 6 Hours">
+        <i data-lucide="skip-back"></i>
+      </button>
+      <button class="ctrl-btn" id="btnStepForward" title="Step Forward 6 Hours">
+        <i data-lucide="skip-forward"></i>
+      </button>
+      <div class="speed-toggle" id="speedToggle">
+        <button class="speed-btn active" data-speed="1">1x</button>
+        <button class="speed-btn" data-speed="2">2x</button>
+        <button class="speed-btn" data-speed="5">5x</button>
+      </div>
+    </div>
+
+    <div class="timeline-slider-wrapper">
+      <input type="range" id="timelineSlider" min="0" max="24" value="12" step="1" class="timeline-range">
+      <div class="timeline-ticks">
+        <span>T -72h</span>
+        <span>T -48h</span>
+        <span>T -24h</span>
+        <span class="now-tick">ANALYSIS (NOW)</span>
+        <span>T +24h</span>
+        <span>T +48h</span>
+        <span>T +72h (Forecast)</span>
+      </div>
+    </div>
+
+    <div class="timeline-info">
+      <span class="current-time-step" id="timeStepLabel">2026-09-30 18:00 UTC (T-00h)</span>
+      <span class="model-run-badge">INCOIS ROMS 1/12° High-Res</span>
+    </div>
+  </footer>
+
+  <!-- Science Communication Modal Dialog -->
+  <div class="modal-backdrop" id="scienceModal">
+    <div class="modal-card glass-panel">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <i data-lucide="graduation-cap" class="modal-icon"></i>
+          <div>
+            <h2>Public Outreach & Science Communication Mode</h2>
+            <p>Interactive Education & Guided Ocean Dynamics Walkthrough</p>
+          </div>
+        </div>
+        <button class="close-modal-btn" id="btnCloseScience"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-intro">
+          Transforming complex numerical ocean model outputs into intuitive 3D experiences for students, researchers, and policymakers. Select a guided story below to fly the 3D camera and highlight key dynamics:
+        </p>
+        <div class="story-cards-grid">
+          <div class="story-card" data-story="monsoon">
+            <div class="story-tag">Seasonal Gyre Reversal</div>
+            <h4>Indian Ocean Monsoon Dynamics</h4>
+            <p>Experience how the Somali Current reverses direction between the Southwest and Northeast monsoons, creating the great coastal upwelling.</p>
+            <button class="launch-story-btn">Explore Story <i data-lucide="arrow-right"></i></button>
+          </div>
+          <div class="story-card" data-story="bob_freshening">
+            <div class="story-tag">Riverine Discharge</div>
+            <h4>Bay of Bengal Freshwater Cap</h4>
+            <p>Massive runoff from the Ganges-Brahmaputra river system creates a low-salinity surface barrier layer that traps heat and intensifies cyclones.</p>
+            <button class="launch-story-btn">Explore Story <i data-lucide="arrow-right"></i></button>
+          </div>
+          <div class="story-card" data-story="argo_network">
+            <div class="story-tag">Autonomous Robotics</div>
+            <h4>How Argo Floats Measure the Deep</h4>
+            <p>Journey from the surface down to 2,000 meters following an autonomous robotic float measuring temperature, salinity, and biogeochemistry.</p>
+            <button class="launch-story-btn">Explore Story <i data-lucide="arrow-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
